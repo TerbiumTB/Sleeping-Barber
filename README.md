@@ -61,5 +61,10 @@ $ mkdir build
 $ cd build
 $ cmake ..
 $ make
-$ ./main
 ```
+### Примеры запуска
+```angular2html
+$ ./build/salon -i ../data/input_1.txt -o ../data/output_1.txt -c 0
+$ ./build/salon -m 7 -n 2 -s 13
+```
+Файлы `enormously_huge_input.txt` и `huge_input.txt` запускать на свой страх и риск, они могут работать очень долго...

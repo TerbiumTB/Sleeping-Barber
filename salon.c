@@ -36,11 +36,13 @@ void *barber_thread(void *param) {
         pthread_mutex_lock(salon->mutex);
 
         //если барбер обсулжил всех посетителей за день, салон закрывается
-        if (salon->all_visited) {
-            rw_write("Все желающие уже посетили салон", NULL);
-            break;
-        }
         while (salon->queue->waiting == 0) {
+            //в салоне побывало максимальное количество посетителей и он закрывается
+            if (salon->all_visited) {
+                rw_write("Салон закрывается", NULL);
+                pthread_mutex_unlock(salon->mutex);
+                return NULL;
+            }
             pthread_mutex_unlock(salon->mutex);
             sleep(1);
             pthread_mutex_lock(salon->mutex);
@@ -70,17 +72,11 @@ void *barber_thread(void *param) {
 
         }
 
-        rw_write("Барбер обслужил всех кто был в очереди и пошел спать", NULL);
-
         //очередь закончилась и барбер пошел спать
+        rw_write("Барбер обслужил всех кто был в очереди и пошел спать", NULL);
         pthread_mutex_unlock(salon->mutex);
 
     }
-
-    //в салоне побывало максимальное количество посетителей и он закрывается
-    rw_write("Салон закрывается", NULL);
-
-    return NULL;
 }
 
 void *customer_thread(void *param) {
@@ -118,7 +114,7 @@ void *customer_thread(void *param) {
     }
 
     //посетитель уходит из салона
-    rw_write("Посетитель %i был обсулжен и покинул салон", &customer.id);
+    rw_write("Посетитель %i был обслужен и покинул салон", &customer.id);
     pthread_mutex_unlock(customer.mutex);
     return NULL;
 }
@@ -162,6 +158,7 @@ int main(int argc, char *argv[]) {
                 break;
             case 'o':
                 output = argv[i];
+
                 break;
             case 'c':
                 console = (argv[i][0] == '1');
@@ -171,7 +168,7 @@ int main(int argc, char *argv[]) {
                 return 0;
         }
     }
-    int visitors_id[max_visitors];
+
     int err;
 
     //инициализируем чтение запись в соответсвии с атрибутами консоли
@@ -179,7 +176,9 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    rw_read(&max_visitors, &capacity, visitors_id, seed);
+    rw_read(&max_visitors, &capacity);
+    int visitors_id[max_visitors];
+    rw_generate(visitors_id, max_visitors, seed);
 
     //наш основной мьютекс
     pthread_mutex_t mutex;
